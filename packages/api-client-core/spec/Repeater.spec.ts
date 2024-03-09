@@ -6,7 +6,8 @@ import {
     MAX_QUEUE_LENGTH,
     SlidingBuffer,
 } from "@manufac/repeater";
-import { delayPromise } from "./helpers";
+import { delayPromise } from "./helpers.js";
+import { createApplyLiveQueryPatch } from "../src/graphql-live-query-utils/createApplyLiveQueryPatch.js";
 
 describe("Repeater", () => {
     test("push", async () => {
@@ -1574,4 +1575,33 @@ describe("Repeater", () => {
         await expect(r.next()).resolves.toEqual({ done: true });
         await expect(r.next()).resolves.toEqual({ done: true });
     });
+    
+  it("Check iterable return getting called if error accoured in createApplyLiveQueryPatch", async () => {
+    const handleApplyPatch  = () => {
+      return {};
+    };
+    let isReturnCalled = false; 
+    const iterator = {
+      [Symbol.asyncIterator](){
+        let counter = 1;
+        return ({
+        next: async () => {
+          // thow error when counter will be 4
+          return ({ done: false, value: { revision: counter === 4 ? 3 : 1, data: counter++ } });
+        },
+        return: async () => {
+          isReturnCalled = true;
+          return ({ done: true, value: null });
+        }
+        })
+      }
+    }
+    const asyncIterableIterator = createApplyLiveQueryPatch<number>(handleApplyPatch)(iterator);
+    try{
+      for await (const _i of  asyncIterableIterator){
+        /* empty */
+      }
+    }catch(error){ /* empty */ }
+    expect(isReturnCalled).toEqual(true);
+  });
 });
