@@ -7,7 +7,6 @@ import {
     SlidingBuffer,
 } from "@manufac/repeater";
 import { delayPromise } from "./helpers.js";
-import { createApplyLiveQueryPatch } from "../src/graphql-live-query-utils/createApplyLiveQueryPatch.js";
 
 describe("Repeater", () => {
     test("push", async () => {
