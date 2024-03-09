@@ -1574,5 +1574,4 @@ describe("Repeater", () => {
         await expect(r.next()).resolves.toEqual({ done: true });
         await expect(r.next()).resolves.toEqual({ done: true });
     });
-
 });
