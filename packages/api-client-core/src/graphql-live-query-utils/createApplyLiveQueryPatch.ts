@@ -1,4 +1,4 @@
-import { Repeater } from "../repeater/repeater.js";
+import { Repeater } from "../repeater/index.js";
 import type { ExecutionResult } from "graphql";
 
 export type ExecutionLivePatchResult<PatchPayload = unknown> = {
