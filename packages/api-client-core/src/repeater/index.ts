@@ -1,5 +1,5 @@
 /** An error subclass which is thrown when there are too many pending push or next operations on a single repeater. */
-class RepeaterOverflowError extends Error {
+export class RepeaterOverflowError extends Error {
   constructor(message: string) {
     super(message);
     Object.defineProperty(this, "name", {
@@ -11,20 +11,139 @@ class RepeaterOverflowError extends Error {
     } else {
       (this as any).__proto__ = this.constructor.prototype;
     }
-
     if (typeof (Error as any).captureStackTrace === "function") {
       (Error as any).captureStackTrace(this, this.constructor);
     }
   }
 }
-
 /*** BUFFERS ***/
 /** A special queue interface which allow multiple values to be pushed onto a repeater without having pushes wait or throw overflow errors, passed as the second argument to the repeater constructor. */
-interface RepeaterBuffer<TValue = unknown> {
+export interface RepeaterBuffer<TValue = unknown> {
   empty: boolean;
   full: boolean;
   add(value: TValue): unknown;
   remove(): TValue;
+}
+
+/** A buffer which allows you to push a set amount of values to the repeater without pushes waiting or throwing errors. */
+export class FixedBuffer implements RepeaterBuffer {
+  // capacity
+  _c: number;
+  // queue
+  _q: Array<unknown>;
+
+  constructor(capacity: number) {
+    if (capacity < 0) {
+      throw new RangeError("Capacity may not be less than 0");
+    }
+
+    this._c = capacity;
+    this._q = [];
+  }
+
+  get empty(): boolean {
+    return this._q.length === 0;
+  }
+
+  get full(): boolean {
+    return this._q.length >= this._c;
+  }
+
+  add(value: unknown): void {
+    if (this.full) {
+      throw new Error("Buffer full");
+    } else {
+      this._q.push(value);
+    }
+  }
+
+  remove(): unknown {
+    if (this.empty) {
+      throw new Error("Buffer empty");
+    }
+
+    return this._q.shift()!;
+  }
+}
+
+// TODO: Use a circular buffer here.
+/** Sliding buffers allow you to push a set amount of values to the repeater without pushes waiting or throwing errors. If the number of values exceeds the capacity set in the constructor, the buffer will discard the earliest values added. */
+export class SlidingBuffer implements RepeaterBuffer {
+  // capacity
+  _c: number;
+  // queue
+  _q: Array<unknown>;
+
+  constructor(capacity: number) {
+    if (capacity < 1) {
+      throw new RangeError("Capacity may not be less than 1");
+    }
+
+    this._c = capacity;
+    this._q = [];
+  }
+
+  get empty(): boolean {
+    return this._q.length === 0;
+  }
+
+  get full(): boolean {
+    return false;
+  }
+
+  add(value: unknown): void {
+    while (this._q.length >= this._c) {
+      this._q.shift();
+    }
+
+    this._q.push(value);
+  }
+
+  remove(): unknown {
+    if (this.empty) {
+      throw new Error("Buffer empty");
+    }
+
+    return this._q.shift();
+  }
+}
+/** Dropping buffers allow you to push a set amount of values to the repeater without the push function waiting or throwing errors. If the number of values exceeds the capacity set in the constructor, the buffer will discard the latest values added. */
+export class DroppingBuffer implements RepeaterBuffer {
+  // capacity
+  _c: number;
+  // queue
+  _q: Array<unknown>;
+
+  constructor(capacity: number) {
+    if (capacity < 1) {
+      throw new RangeError("Capacity may not be less than 1");
+    }
+
+    this._c = capacity;
+    this._q = [];
+  }
+
+  get empty(): boolean {
+    return this._q.length === 0;
+  }
+
+  get full() {
+    return false;
+  }
+
+  add(value: unknown): void {
+    if (this._q.length < this._c) {
+      this._q.push(value);
+    }
+  }
+
+  remove(): unknown {
+    if (this.empty) {
+      throw new Error("Buffer empty");
+    }
+
+    return this._q.shift();
+  }
 }
 
 /** Makes sure promise-likes don’t cause unhandled rejections. */
@@ -84,7 +203,7 @@ const Done = 3;
 const Rejected = 4;
 
 /** The maximum number of push or next operations which may exist on a single repeater. */
-const MAX_QUEUE_LENGTH = 1024;
+export const MAX_QUEUE_LENGTH = 1024;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const NOOP = () => {};
