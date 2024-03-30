@@ -1,3 +1,7 @@
+/**
+ * Code is adopted from https://github.com/repeaterjs/repeater/blob/master/packages/repeater/src/repeater.ts. The statis classes from the original code remvoed to controle the bundle size.
+ */
+
 /** An error subclass which is thrown when there are too many pending push or next operations on a single repeater. */
 export class RepeaterOverflowError extends Error {
   constructor(message: string) {
@@ -206,7 +210,7 @@ const Rejected = 4;
 export const MAX_QUEUE_LENGTH = 1024;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-const NOOP = () => {};
+const NOOP = () => { };
 
 /** An interface containing the private data of repeaters, only accessible through a private WeakMap. */
 interface RepeaterRecord<T, TReturn, TNext> {
